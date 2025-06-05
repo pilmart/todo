@@ -19,8 +19,6 @@ func main() {
 
 	// Declare variable for our new todo item
 	var toDo ToDo
-	// Declare array of new todo items
-	var toDos []ToDo
 
 	/*
 	 Initial flag setup to capture new todo information
@@ -30,18 +28,19 @@ func main() {
 	*/
 
 	toDo.Id = rand.IntN(100000) + 1
-	fmt.Printf("%d", toDo.Id)
+	log.Printf("Generated id : %d", toDo.Id)
 
 	flag.StringVar(&toDo.Description, "description", " ", "Description of to do item")
 	flag.StringVar(&toDo.Status, "status", "not started", "Status of to do item")
 	flag.Parse()
 
-	fmt.Printf("%+v\n", toDo)
+	log.Printf("New to do item %+v\n", toDo)
 
-	toDos = append(toDos, toDo)
-	fmt.Printf(" todos array %+v\n", toDos)
-
+	// todos from json file
 	var todos = loadAll()
+
+	// bolt in our new todo
+	todos.ToDos = append(todos.ToDos, toDo)
 
 	var sb strings.Builder
 
@@ -50,6 +49,8 @@ func main() {
 		sb.WriteString("description : " + todos.ToDos[i].Description + " ")
 		sb.WriteString("status : " + todos.ToDos[i].Status + "\n")
 	}
+
+	todos.ToDos = append(todos.ToDos, toDo)
 
 	fmt.Println("Data/todos.json " + sb.String())
 
