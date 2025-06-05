@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	todoFile, err := os.Open("todos.json")
+	todoFile, err := os.Open("./data/todos.json")
 	// if we returns an error then handle it
 	if err != nil {
 		log.Fatalf("Unable to open file : %s", err)
