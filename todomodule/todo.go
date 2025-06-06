@@ -115,11 +115,11 @@ func create(description string, status string) {
 
 }
 
-// delete a record by id
+// delete a record by id with check to ensure id is sensible
 func delete(Id int) {
 
 	// check for uninitialised Id
-	if Id == 0 {
+	if Id <= 0 {
 		log.Println("Id uninitialised - no action")
 		return
 	}
@@ -142,10 +142,15 @@ func delete(Id int) {
 
 	if currIndx > -1 {
 		log.Printf("Id..%d is located at position %d in Array, and would be deleted !!!", Id, currIndx)
+		var newToDos = append(toDos[:currIndx], toDos[currIndx+1:]...)
+		log.Printf("New Array..%v", newToDos)
+		// persist back to file
+		saveAll(newToDos)
+		log.Printf("Delete for id..%d complete", Id)
 	} else {
 		log.Printf("Id..%d cannot be located - no action taken", Id)
 	}
-
+	log.Println("delete completes")
 }
 
 // saves all items in ToDo array back to the specified json file
