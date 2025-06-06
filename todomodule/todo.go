@@ -54,8 +54,11 @@ func main() {
 		// create new todo item
 		create(description, status)
 	case "update":
-		log.Printf("--selected action..%s, not implemented as yet\n", strings.ToLower(action))
-		// update function
+		var updatedToDo ToDo
+		updatedToDo.Id = Id
+		updatedToDo.Description = description
+		updatedToDo.Status = status
+		update(updatedToDo)
 	case "delete":
 		// delete function
 		delete(Id)
@@ -112,6 +115,48 @@ func create(description string, status string) {
 	saveAll(toDos)
 
 	log.Printf("create completes after saving record %v\n", toDo)
+
+}
+
+// Update a single ToDo item and persist back to file, make sure
+// incoming ToDo item has a sensible Id otherwise bail out
+func update(toDo ToDo) {
+	// check for uninitialised Id
+	if toDo.Id <= 0 {
+		log.Println("ToDo Id uninitialised - no action taken")
+		return
+	}
+
+	var filePath = "./data/todos.json"
+	var toDos []ToDo
+	log.Printf("Starting update..for record : %v", toDo)
+
+	// same as delete here - probably refactor out later
+	// Load todos from json file
+	toDos = loadAll(filePath)
+
+	// scan the array for the required id and capture its index
+	var currIndx int = -1
+	for i := 0; i < len(toDos); i++ {
+		if toDos[i].Id == toDo.Id {
+			currIndx = i
+			break
+		}
+	}
+
+	if currIndx > -1 {
+		log.Printf("Id..%d is located at position %d in Array, and can be updated with the new item ", toDo.Id, currIndx)
+		// In place array update using currindx
+		toDos[currIndx].Description = toDo.Description
+		toDos[currIndx].Status = toDo.Status
+		log.Printf("Updated Array..%v", toDos)
+		// persist back to file
+		saveAll(toDos)
+		log.Printf("Update for record..%v complete", toDo)
+	} else {
+		log.Printf("Id..%d cannot be located - no action taken", toDo.Id)
+	}
+	log.Println("delete completes")
 
 }
 

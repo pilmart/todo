@@ -21,7 +21,12 @@
   },
   {
     "id": 6,
-    "description": "martin test 2 from empty",
+    "description": "updated from command line",
+    "status": "in progress"
+  },
+  {
+    "id": 7,
+    "description": "new element from CLI",
     "status": "not started"
   }
 ]
