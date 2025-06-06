@@ -43,7 +43,7 @@ func main() {
 
 	flag.Parse()
 
-	// actions - Create / Read / Update / Delete
+	// actions - Create / Show / Update / Delete
 
 	fmt.Printf("Selected action..%s\n", strings.ToLower(action))
 	switch strings.ToLower(action) {
