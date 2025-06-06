@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
-	"math/rand/v2"
 	"os"
 	"strconv"
 	"strings"
@@ -22,38 +22,57 @@ type ToDo struct {
 
 func main() {
 
-	// Declare variable for our new todo item
-	var toDo ToDo
-
-	// ToDos array of ToDo items
-	var toDos []ToDo
-
-	var filePath = "./data/todos.json"
+	// Flag values
+	var Id int
+	var action string
+	var description string
+	var status string
 
 	/*
 	 Initial flag setup to capture new todo information
-	 id - generate random int simulate db id generation
-	 description - default to empty string
-	 status - not started
+	 id - only relevant for update/delete options
+	 action - one of show/update/create/delete
+	 description - default to empty string - relevant for create
+	 status - default to not started - relevant for create
 	*/
 
-	// Load todos from json file
-	toDos = loadAll(filePath)
+	flag.StringVar(&action, "action", "show", "Selected action")
+	flag.StringVar(&description, "description", " ", "Description of to do item")
+	flag.StringVar(&status, "status", "not started", "Status of to do item")
+	flag.IntVar(&Id, "Id", 0, "Mandatory for both update/delete actions")
 
-	toDo.Id = rand.IntN(100000) + 1
-	log.Printf("Generated id : %d", toDo.Id)
-
-	flag.StringVar(&toDo.Description, "description", " ", "Description of to do item")
-	flag.StringVar(&toDo.Status, "status", "not started", "Status of to do item")
 	flag.Parse()
 
 	// actions - Create / Read / Update / Delete
 
-	// print the single item to console
-	log.Printf("New to do item %+v\n", toDo)
+	fmt.Printf("Selected action..%s\n", strings.ToLower(action))
+	switch strings.ToLower(action) {
+	case "show":
+		// show all records no params needed
+		showAllRecords()
+	case "create":
+		// create new todo item
+		create(description, status)
+	case "update":
+		log.Printf("--selected action..%s, not implemented as yet\n", strings.ToLower(action))
+		// update function
+	case "delete":
+		// delete function
+		delete(Id)
+	default:
+		log.Printf("Unsupported action..%s passed to procedure\n", strings.ToLower(action))
+	}
+}
 
-	// Add the new todo item to the array
-	toDos = append(toDos, toDo)
+// Show all the current items on the console.
+func showAllRecords() {
+	// ToDos array of ToDo items
+	var toDos []ToDo
+	var filePath = "./data/todos.json"
+	log.Println("Starting showAllRecords..")
+
+	// Load todos from json file
+	toDos = loadAll(filePath)
 
 	// Dump the array to the console
 	var sb strings.Builder
@@ -66,12 +85,70 @@ func main() {
 	}
 
 	log.Printf("%s : "+sb.String(), filePath)
+	log.Println("showAllRecords completes")
+
+}
+
+// Create a single ToDo item and persist back to file
+// Note :-  we have default values set in the flags so we can just create with those
+func create(description string, status string) {
+	var filePath = "./data/todos.json"
+	var toDos []ToDo
+	log.Printf("Starting create..with desc :%s and status: %s", description, status)
+
+	// Load todos from json file
+	toDos = loadAll(filePath)
+
+	// Add the new todo item to the array
+	var toDo ToDo
+	toDo.Id = getNextId(toDos)
+	toDo.Status = status
+	toDo.Description = description
+
+	// add new item to array
+	toDos = append(toDos, toDo)
 
 	// save the revised data here
 	saveAll(toDos)
 
+	log.Printf("create completes after saving record %v\n", toDo)
+
 }
 
+// delete a record by id
+func delete(Id int) {
+
+	// check for uninitialised Id
+	if Id == 0 {
+		log.Println("Id uninitialised - no action")
+		return
+	}
+
+	var toDos []ToDo
+	var filePath = "./data/todos.json"
+	log.Printf("Starting delete for id..%d", Id)
+
+	// Load todos from json file
+	toDos = loadAll(filePath)
+
+	// scan the array for the required id and capture its index
+	var currIndx int = -1
+	for i := 0; i < len(toDos); i++ {
+		if toDos[i].Id == Id {
+			currIndx = i
+			break
+		}
+	}
+
+	if currIndx > -1 {
+		log.Printf("Id..%d is located at position %d in Array, and would be deleted !!!", Id, currIndx)
+	} else {
+		log.Printf("Id..%d cannot be located - no action taken", Id)
+	}
+
+}
+
+// saves all items in ToDo array back to the specified json file
 func saveAll(todos []ToDo) {
 	log.Println("Starting saveAll")
 	log.Printf("saveAll : New to do items %+v\n", todos)
@@ -105,6 +182,7 @@ func saveAll(todos []ToDo) {
 	log.Println("saveAll completes")
 }
 
+// Loads all items in from the specified file and returns an array of ToDo Items
 func loadAll(filePath string) []ToDo {
 
 	log.Printf("Starting loadAll from file %s", filePath)
@@ -149,6 +227,28 @@ func loadAll(filePath string) []ToDo {
 	return todos
 }
 
+/*
+	Helper functions below this comment line
+*/
+// Scans the array and returns highest id int + 1
+func getNextId(toDos []ToDo) int {
+	if len(toDos) == 0 {
+		// no elements so set initial value...
+		return 1
+	}
+
+	var highCount int
+	for i := 0; i < len(toDos); i++ {
+		log.Printf("Comparing %d with %d", toDos[i].Id, highCount)
+		if toDos[i].Id > highCount {
+			highCount = toDos[i].Id
+		}
+	}
+	log.Printf("highCount  : %d", highCount)
+	return highCount + 1
+}
+
+// Make sure the file exists, probably better ways to do this
 func checkFileExists(filePath string) bool {
 	_, error := os.Stat(filePath)
 	//return !os.IsNotExist(err)
