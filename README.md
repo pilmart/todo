@@ -20,3 +20,9 @@ Note :- Case insensitive flag
 
 go run todo.go -action "show" 
 List out all elements in the data/todos.json file
+
+Updates:-
+
+Cleaned up Repo
+Cleaned up folder structure
+Moved type to own 'datatypes' package
