@@ -26,7 +26,12 @@
   },
   {
     "id": 7,
-    "description": "new element from CLI",
+    "description": "test of revised packaging",
+    "status": "COMPLETED"
+  },
+  {
+    "id": 8,
+    "description": "test of revised packaging",
     "status": "not started"
   }
 ]

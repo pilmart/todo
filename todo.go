@@ -3,7 +3,6 @@ package main
 // imports
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -11,7 +10,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"todo/constants"
 	"todo/datatypes"
+	"todo/utils"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 
 	flag.StringVar(&action, "action", "show", "Selected action")
 	flag.StringVar(&description, "description", " ", "Description of to do item")
-	flag.StringVar(&status, "status", "not started", "Status of to do item")
+	flag.StringVar(&status, "status", constants.StatusNotStarted, "Status of to do item")
 	flag.IntVar(&Id, "Id", 0, "Mandatory for both update/delete actions")
 
 	flag.Parse()
@@ -45,13 +46,24 @@ func main() {
 		// show all records no params needed
 		showAllRecords()
 	case "create":
-		// create new todo item
+		if !utils.ValidateStatus(status) {
+			utils.ShowPermittedStatuses()
+			log.Fatalf("Status of %s is not permitted", status)
+			return
+		}
+		// All ok create new todo item
 		create(description, status)
 	case "update":
 		var updatedToDo datatypes.ToDo
 		updatedToDo.Id = Id
 		updatedToDo.Description = description
 		updatedToDo.Status = status
+		if !utils.ValidateStatus(status) {
+			utils.ShowPermittedStatuses()
+			log.Fatalf("Status of %s is not permitted", status)
+			return
+		}
+		// all ok update may continue
 		update(updatedToDo)
 	case "delete":
 		// delete function
@@ -98,7 +110,7 @@ func create(description string, status string) {
 
 	// Add the new todo item to the array
 	var toDo datatypes.ToDo
-	toDo.Id = getNextId(toDos)
+	toDo.Id = utils.GetNextId(toDos)
 	toDo.Status = status
 	toDo.Description = description
 
@@ -235,7 +247,7 @@ func loadAll(filePath string) []datatypes.ToDo {
 	var todos []datatypes.ToDo
 
 	// Check file existence
-	jsonFileExists := checkFileExists(filePath)
+	jsonFileExists := utils.CheckFileExists(filePath)
 
 	if !jsonFileExists {
 		log.Printf("Unable to open file : %s an empty array will be returned ", filePath)
@@ -269,32 +281,4 @@ func loadAll(filePath string) []datatypes.ToDo {
 	// hand back our result..
 	log.Println("loadAll completes...")
 	return todos
-}
-
-/*
-	Helper functions below this comment line
-*/
-// Scans the array and returns highest id int + 1
-func getNextId(toDos []datatypes.ToDo) int {
-	if len(toDos) == 0 {
-		// no elements so set initial value...
-		return 1
-	}
-
-	var highCount int
-	for i := 0; i < len(toDos); i++ {
-		log.Printf("Comparing %d with %d", toDos[i].Id, highCount)
-		if toDos[i].Id > highCount {
-			highCount = toDos[i].Id
-		}
-	}
-	log.Printf("highCount  : %d", highCount)
-	return highCount + 1
-}
-
-// Make sure the file exists, probably better ways to do this
-func checkFileExists(filePath string) bool {
-	_, error := os.Stat(filePath)
-	//return !os.IsNotExist(err)
-	return !errors.Is(error, os.ErrNotExist)
 }
