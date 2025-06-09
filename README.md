@@ -26,3 +26,5 @@ Updates:-
 Cleaned up Repo
 Cleaned up folder structure
 Moved type to own 'datatypes' package
+Split code into packages datatypes, utils, constants
+Increased error handling
