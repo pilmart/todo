@@ -26,8 +26,13 @@ Updates:-
 Cleaned up Repo
 
 Cleaned up folder structure
+
 Moved type to own 'datatypes' package
+
 Split code into packages datatypes, utils, constants, dataaccess, cli, tests (Not implemented as yet)
+
 Increased error handling
+
 Amended GetNextId to use sort as per recommendations
+
 Added slog & context trace id
