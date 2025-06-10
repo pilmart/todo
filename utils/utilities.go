@@ -3,33 +3,28 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
+	"sort"
 	"todo/constants"
 	"todo/datatypes"
 )
 
 /*
 	Helper functions below this comment line
-	GetNextId & CheckfileExists
+	GetNextId, CheckfileExists, ValidateStatus
 	Note - Capitalization of function names will export the functions correctly
 */
-// Scans the array and returns highest id int + 1
+// Scans the array and returns highest id int + 1, use sort to put them in desc order
+// then pick the id of the first element
 func GetNextId(toDos []datatypes.ToDo) int {
 	if len(toDos) == 0 {
 		// no elements so set initial value...
 		return 1
 	}
-
-	var highCount int
-	for i := 0; i < len(toDos); i++ {
-		log.Printf("Comparing %d with %d", toDos[i].Id, highCount)
-		if toDos[i].Id > highCount {
-			highCount = toDos[i].Id
-		}
-	}
-	log.Printf("highCount  : %d", highCount)
-	return highCount + 1
+	sort.Slice(toDos, func(i, j int) bool {
+		return toDos[i].Id > toDos[j].Id
+	})
+	return toDos[0].Id + 11
 }
 
 // Make sure the file exists, probably better ways to do this

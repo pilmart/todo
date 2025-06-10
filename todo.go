@@ -2,13 +2,18 @@ package main
 
 // imports
 import (
+	"context"
 	"flag"
 	"log"
+	"log/slog"
+	"os"
 	"strings"
 	"todo/constants"
 	"todo/dataaccess"
 	"todo/datatypes"
 	"todo/utils"
+
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -18,6 +23,23 @@ func main() {
 	var action string
 	var description string
 	var status string
+
+	// Set up our logging
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelDebug,
+		AddSource: true}))
+
+	slog.SetDefault(logger)
+	// Create a traceId from google UUID & store it in a context
+	traceID := uuid.NewString()
+	ctx := context.WithValue(context.Background(), "traceID", traceID)
+	ctx = context.WithValue(ctx, "random", "abcde")
+
+	// Log with contextual information
+	logger.With(
+		"traceID", ctx.Value("traceID"),
+		"random", ctx.Value("random"),
+	).Info("test of ctx")
 
 	/*
 	 Initial flag setup to capture new todo information
@@ -31,11 +53,9 @@ func main() {
 	flag.StringVar(&description, "description", " ", "Description of to do item")
 	flag.StringVar(&status, "status", constants.StatusNotStarted, "Status of to do item")
 	flag.IntVar(&Id, "Id", 0, "Mandatory for both update/delete actions")
-
 	flag.Parse()
 
 	// actions - Create / Show / Update / Delete
-
 	log.Printf("Selected action..%s\n", strings.ToLower(action))
 	switch strings.ToLower(action) {
 	case "show":

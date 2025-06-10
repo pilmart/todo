@@ -3,7 +3,7 @@ package dataaccess
 import (
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -17,7 +17,7 @@ func ShowAllRecords() {
 	// ToDos array of ToDo items
 	var toDos []datatypes.ToDo
 	filePath := "./data/todos.json"
-	log.Println("Starting showAllRecords..")
+	slog.Info("Starting ShowAllRecords..")
 
 	// Load todos from json file
 	toDos = loadAll(filePath)
@@ -32,8 +32,8 @@ func ShowAllRecords() {
 		sb.WriteString("status : " + toDos[i].Status + "\n")
 	}
 
-	log.Printf("%s : "+sb.String(), filePath)
-	log.Println("showAllRecords completes")
+	slog.Info(sb.String())
+	slog.Info("ShowAllRecords completes")
 
 }
 
@@ -42,7 +42,7 @@ func ShowAllRecords() {
 func Create(description string, status string) {
 	filePath := "./data/todos.json"
 	var toDos []datatypes.ToDo
-	log.Printf("Starting create..with desc :%s and status: %s", description, status)
+	slog.Info("Starting Create..with ", "description", description, "status", status)
 
 	// Load todos from json file
 	toDos = loadAll(filePath)
@@ -59,7 +59,7 @@ func Create(description string, status string) {
 	// save the revised data here
 	saveAll(toDos)
 
-	log.Printf("create completes after saving record %v\n", toDo)
+	slog.Info("Create completes after saving ", "record", toDo)
 
 }
 
@@ -68,13 +68,13 @@ func Create(description string, status string) {
 func Update(toDo datatypes.ToDo) {
 	// check for uninitialised Id
 	if toDo.Id <= 0 {
-		log.Println("ToDo Id uninitialised - no action taken")
+		slog.Info("ToDo Id uninitialised - no action taken")
 		return
 	}
 
 	filePath := "./data/todos.json"
-	var toDos [] datatypes.ToDo
-	log.Printf("Starting update..for record : %v", toDo)
+	var toDos []datatypes.ToDo
+	slog.Info("Starting Update..for ", "record", toDo)
 
 	// same as delete here - probably refactor out later
 	// Load todos from json file
@@ -90,18 +90,16 @@ func Update(toDo datatypes.ToDo) {
 	}
 
 	if currIndx > -1 {
-		log.Printf("Id..%d is located at position %d in Array, and can be updated with the new item ", toDo.Id, currIndx)
 		// In place array update using currindx
 		toDos[currIndx].Description = toDo.Description
 		toDos[currIndx].Status = toDo.Status
-		log.Printf("Updated Array..%v", toDos)
 		// persist back to file
 		saveAll(toDos)
-		log.Printf("Update for record..%v complete", toDo)
+		slog.Info("Update for ", "record", toDo, "status", "completed")
 	} else {
-		log.Printf("Id..%d cannot be located - no action taken", toDo.Id)
+		slog.Warn("Update not run as record id, cannot be located - no action taken ", "ID", toDo.Id)
 	}
-	log.Println("delete completes")
+	slog.Info("Update completes")
 
 }
 
@@ -110,13 +108,13 @@ func Delete(Id int) {
 
 	// check for uninitialised Id
 	if Id <= 0 {
-		log.Println("Id uninitialised - no action")
+		slog.Info("Id uninitialised - no action")
 		return
 	}
 
-	var toDos [] datatypes.ToDo
+	var toDos []datatypes.ToDo
 	filePath := "./data/todos.json"
-	log.Printf("Starting delete for id..%d", Id)
+	slog.Info("Starting Delete for ID", "ID", Id)
 
 	// Load todos from json file
 	toDos = loadAll(filePath)
@@ -131,58 +129,54 @@ func Delete(Id int) {
 	}
 
 	if currIndx > -1 {
-		log.Printf("Id..%d is located at position %d in Array, and would be deleted !!!", Id, currIndx)
 		var newToDos = append(toDos[:currIndx], toDos[currIndx+1:]...)
-		log.Printf("New Array..%v", newToDos)
 		// persist back to file
 		saveAll(newToDos)
-		log.Printf("Delete for id..%d complete", Id)
+		slog.Info("Delete for id complete", "ID", Id)
 	} else {
-		log.Printf("Id..%d cannot be located - no action taken", Id)
+		slog.Warn("Delete not run as record id, cannot be located - no action taken ", "ID", Id)
 	}
-	log.Println("delete completes")
+	slog.Info("Delete completes")
 }
 
 // saves all items in ToDo array back to the specified json file
 // leave as private
 func saveAll(todos []datatypes.ToDo) {
-	log.Println("Starting saveAll")
-	log.Printf("saveAll : New to do items %+v\n", todos)
-
+	slog.Info("Starting saveAll")
 	filePath := "./data/todos.json"
 
 	// Marshal the struct into JSON
 	jsonData, err := json.MarshalIndent(todos, "", "  ")
 	if err != nil {
-		log.Fatalf("Error marshalling JSON: %v", err)
+		slog.Error("Error marshalling JSON: ", "error", err)
 		return
 	}
-	log.Println("Marshalling completed")
+	slog.Info("Marshalling completed")
 
 	// open up a new file....
 	file, err := os.Create(filePath)
 	if err != nil {
-		log.Fatalf("Error creating file: %v", err)
+		slog.Error("Error creating file ", "error", err)
 		return
 	}
 	defer file.Close()
-	log.Printf("File Created %s", filePath)
+	slog.Info("File Created ", "file", filePath)
 
 	// Write the JSON data to the file
 	_, err = file.Write(jsonData)
 	if err != nil {
-		log.Fatalf("Error writing to file: %v", err)
+		slog.Error("Error writing to file ", "error", err)
 		return
 	}
-	log.Printf("File Written %s", filePath)
-	log.Println("saveAll completes")
+
+	slog.Info("File Written ok, SaveAll completes")
 }
 
 // Loads all items in from the specified file and returns an array of ToDo Items
 // leave as private
 func loadAll(filePath string) []datatypes.ToDo {
 
-	log.Printf("Starting loadAll from file %s", filePath)
+	slog.Info("Starting loadAll from file", "file", filePath)
 
 	// is of type ToDos
 	var todos []datatypes.ToDo
@@ -191,17 +185,17 @@ func loadAll(filePath string) []datatypes.ToDo {
 	jsonFileExists := utils.CheckFileExists(filePath)
 
 	if !jsonFileExists {
-		log.Printf("Unable to open file : %s an empty array will be returned ", filePath)
+		slog.Info("Unable to open file, an empty array will be returned ", "file", filePath)
 		return todos
 	}
-	log.Printf("File : %s located...", filePath)
+	slog.Info("File located", "file", filePath)
 
 	data, err := os.Open(filePath)
 	// Handle any error
 	if err != nil {
-		log.Fatalf("Unable to open file : %v", err)
+		slog.Error("Unable to open file", "error", err)
 	}
-	log.Println("Successfully Opened todos.json")
+	slog.Info("Successfully Opened todos.json")
 
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer data.Close()
@@ -209,17 +203,18 @@ func loadAll(filePath string) []datatypes.ToDo {
 	// Read the file in....
 	byteValue, err := io.ReadAll(data)
 	if err != nil {
-		log.Fatalf("loadAll - Unable to ReadAll :  %v", err)
+		slog.Error("loadAll - Unable to ReadAll", "error", err)
 	}
-	log.Println("Successfully Read bytevalue")
+	slog.Info("Successfully Read bytevalue")
 
 	// unmarshal the json...
 	err = json.Unmarshal(byteValue, &todos)
 	if err != nil {
-		log.Fatalf("Unable to marshal JSON due to %v", err)
+		slog.Error("Unable to marshal JSON", "error", err)
 	}
-	log.Println("To Do's contains " + strconv.Itoa(len(todos)) + " items ")
+
+	slog.Info("To Do's contains " + strconv.Itoa(len(todos)) + " items ")
 	// hand back our result..
-	log.Println("loadAll completes...")
+	slog.Info("loadAll completes...")
 	return todos
 }
