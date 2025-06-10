@@ -1,6 +1,7 @@
 package dataaccess
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -13,11 +14,15 @@ import (
 
 // Show all the current items on the console.
 // make functions public by capitalising function names
-func ShowAllRecords() {
+func ShowAllRecords(ctx context.Context) {
 	// ToDos array of ToDo items
 	var toDos []datatypes.ToDo
 	filePath := "./data/todos.json"
-	slog.Info("Starting ShowAllRecords..")
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+	slog.Info("Starting ShowAllRecords for traceID", "traceID", traceID)
 
 	// Load todos from json file
 	toDos = loadAll(filePath)
@@ -39,10 +44,15 @@ func ShowAllRecords() {
 
 // Create a single ToDo item and persist back to file
 // Note :-  we have default values set in the flags so we can just create with those
-func Create(description string, status string) {
+func Create(ctx context.Context, description string, status string) {
 	filePath := "./data/todos.json"
 	var toDos []datatypes.ToDo
-	slog.Info("Starting Create..with ", "description", description, "status", status)
+
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+	slog.Info("Starting Create..with ", "description", description, "status", status, "traceID", traceID)
 
 	// Load todos from json file
 	toDos = loadAll(filePath)
@@ -65,7 +75,7 @@ func Create(description string, status string) {
 
 // Update a single ToDo item and persist back to file, make sure
 // incoming ToDo item has a sensible Id otherwise bail out
-func Update(toDo datatypes.ToDo) {
+func Update(ctx context.Context, toDo datatypes.ToDo) {
 	// check for uninitialised Id
 	if toDo.Id <= 0 {
 		slog.Info("ToDo Id uninitialised - no action taken")
@@ -74,7 +84,13 @@ func Update(toDo datatypes.ToDo) {
 
 	filePath := "./data/todos.json"
 	var toDos []datatypes.ToDo
-	slog.Info("Starting Update..for ", "record", toDo)
+
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+
+	slog.Info("Starting Update..for ", "record", toDo, "traceID", traceID)
 
 	// same as delete here - probably refactor out later
 	// Load todos from json file
@@ -104,7 +120,7 @@ func Update(toDo datatypes.ToDo) {
 }
 
 // delete a record by id with check to ensure id is sensible
-func Delete(Id int) {
+func Delete(ctx context.Context, Id int) {
 
 	// check for uninitialised Id
 	if Id <= 0 {
@@ -114,7 +130,13 @@ func Delete(Id int) {
 
 	var toDos []datatypes.ToDo
 	filePath := "./data/todos.json"
-	slog.Info("Starting Delete for ID", "ID", Id)
+
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+
+	slog.Info("Starting Delete for ID", "ID", Id, "traceID", traceID)
 
 	// Load todos from json file
 	toDos = loadAll(filePath)

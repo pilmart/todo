@@ -24,7 +24,7 @@ func GetNextId(toDos []datatypes.ToDo) int {
 	sort.Slice(toDos, func(i, j int) bool {
 		return toDos[i].Id > toDos[j].Id
 	})
-	return toDos[0].Id + 11
+	return toDos[0].Id + 1
 }
 
 // Make sure the file exists, probably better ways to do this
