@@ -24,6 +24,7 @@ List out all elements in the data/todos.json file
 Updates:-
 
 Cleaned up Repo
+
 Cleaned up folder structure
 Moved type to own 'datatypes' package
 Split code into packages datatypes, utils, constants, dataaccess, cli, tests (Not implemented as yet)
