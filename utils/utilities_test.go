@@ -106,7 +106,6 @@ func TestGetNextIdTableDriven(t *testing.T) {
 	t.Log("TestGetNextIdTableDriven - ends")
 }
 
-
 func TestCheckFileExists_ReturnType(t *testing.T) {
 
 	// Should only return a boolean
@@ -121,4 +120,32 @@ func TestCheckFileExists_ReturnType(t *testing.T) {
 	}
 
 	t.Log("TestCheckFileExists_ReturnType - ends")
+}
+
+func TestValidateStatusTableDriven(t *testing.T) {
+
+	// Should only return a boolean
+	t.Log("TestValidateStatus - starts")
+
+	tests := []struct {
+		name     string
+		value    string
+		expected bool
+	}{
+		{"Valid_Completed", "COMPLETED", true},
+		{"Valid_NotStarted", "NOT STARTED", true},
+		{"Valid_Started", "STARTED", true},
+		{"Invalid", "random junk", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Actioning test %s", tt.name)
+			result := ValidateStatus(tt.value)
+			if result != tt.expected {
+				t.Errorf("ValidateStatus = %t want %t", result, tt.expected)
+			}
+		})
+	}
+	t.Log("TestValidateStatus - ends")
 }
