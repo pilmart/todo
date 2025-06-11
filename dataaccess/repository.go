@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"todo/datatypes"
+	"todo/model"
 	"todo/utils"
 )
 
@@ -16,7 +16,7 @@ import (
 // make functions public by capitalising function names
 func ShowAllRecords(ctx context.Context) {
 	// ToDos array of ToDo items
-	var toDos []datatypes.ToDo
+	var toDos []model.ToDo
 	filePath := "./data/todos.json"
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
@@ -46,7 +46,7 @@ func ShowAllRecords(ctx context.Context) {
 // Note :-  we have default values set in the flags so we can just create with those
 func Create(ctx context.Context, description string, status string) {
 	filePath := "./data/todos.json"
-	var toDos []datatypes.ToDo
+	var toDos []model.ToDo
 
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
@@ -58,7 +58,7 @@ func Create(ctx context.Context, description string, status string) {
 	toDos = loadAll(filePath)
 
 	// Add the new todo item to the array
-	var toDo datatypes.ToDo
+	var toDo model.ToDo
 	toDo.Id = utils.GetNextId(toDos)
 	toDo.Status = status
 	toDo.Description = description
@@ -75,7 +75,7 @@ func Create(ctx context.Context, description string, status string) {
 
 // Update a single ToDo item and persist back to file, make sure
 // incoming ToDo item has a sensible Id otherwise bail out
-func Update(ctx context.Context, toDo datatypes.ToDo) {
+func Update(ctx context.Context, toDo model.ToDo) {
 	// check for uninitialised Id
 	if toDo.Id <= 0 {
 		slog.Info("ToDo Id uninitialised - no action taken")
@@ -83,7 +83,7 @@ func Update(ctx context.Context, toDo datatypes.ToDo) {
 	}
 
 	filePath := "./data/todos.json"
-	var toDos []datatypes.ToDo
+	var toDos []model.ToDo
 
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
@@ -128,7 +128,7 @@ func Delete(ctx context.Context, Id int) {
 		return
 	}
 
-	var toDos []datatypes.ToDo
+	var toDos []model.ToDo
 	filePath := "./data/todos.json"
 
 	traceID := ctx.Value("traceID")
@@ -163,7 +163,7 @@ func Delete(ctx context.Context, Id int) {
 
 // saves all items in ToDo array back to the specified json file
 // leave as private
-func saveAll(todos []datatypes.ToDo) {
+func saveAll(todos []model.ToDo) {
 	slog.Info("Starting saveAll")
 	filePath := "./data/todos.json"
 
@@ -196,12 +196,12 @@ func saveAll(todos []datatypes.ToDo) {
 
 // Loads all items in from the specified file and returns an array of ToDo Items
 // leave as private
-func loadAll(filePath string) []datatypes.ToDo {
+func loadAll(filePath string) []model.ToDo {
 
 	slog.Info("Starting loadAll from file", "file", filePath)
 
 	// is of type ToDos
-	var todos []datatypes.ToDo
+	var todos []model.ToDo
 
 	// Check file existence
 	jsonFileExists := utils.CheckFileExists(filePath)

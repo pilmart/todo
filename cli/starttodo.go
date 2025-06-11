@@ -10,7 +10,7 @@ import (
 	"strings"
 	"todo/constants"
 	"todo/dataaccess"
-	"todo/datatypes"
+	"todo/model"
 	"todo/utils"
 
 	"github.com/google/uuid"
@@ -65,7 +65,7 @@ func StartToDo() {
 		// All ok create new todo item
 		dataaccess.Create(ctx, description, status)
 	case "update":
-		var updatedToDo datatypes.ToDo
+		var updatedToDo model.ToDo
 		updatedToDo.Id = Id
 		updatedToDo.Description = description
 		updatedToDo.Status = status

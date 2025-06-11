@@ -1,4 +1,4 @@
-package datatypes
+package model
 
 // struct used to maintain an individual todo item
 type ToDo struct {

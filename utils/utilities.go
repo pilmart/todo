@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 	"todo/constants"
-	"todo/datatypes"
+	"todo/model"
 )
 
 /*
@@ -16,9 +16,10 @@ import (
 */
 // Scans the array and returns highest id int + 1, use sort to put them in desc order
 // then pick the id of the first element
-func GetNextId(toDos []datatypes.ToDo) int {
+func GetNextId(toDos []model.ToDo) int {
 	if len(toDos) == 0 {
-		// no elements so set initial value...
+		// no elements so set initial value, not an error state as we are
+		// will create a new json file starting from element id 1
 		return 1
 	}
 	sort.Slice(toDos, func(i, j int) bool {
