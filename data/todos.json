@@ -16,7 +16,7 @@
   },
   {
     "id": 1,
-    "description": "completely overwrite againxxx",
-    "status": "COMPLETED"
+    "description": "test from cli",
+    "status": "NOT STARTED"
   }
 ]

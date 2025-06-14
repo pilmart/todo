@@ -31,7 +31,6 @@ func StartToDo() {
 	*/
 
 	traceID := uuid.NewString()
-
 	ctx := context.WithValue(context.Background(), "traceID", traceID)
 
 	flag.StringVar(&action, "action", "show", "Selected action")
