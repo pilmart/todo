@@ -5,8 +5,6 @@ import (
 	"context"
 	"flag"
 	"log"
-	"log/slog"
-	"os"
 	"strings"
 	"todo/constants"
 	"todo/dataaccess"
@@ -24,18 +22,6 @@ func StartToDo() {
 	var description string
 	var status string
 
-	// Set up our logging, could write to a file here !
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     slog.LevelDebug,
-		AddSource: true}))
-
-	// Use this logger throughout the app
-	slog.SetDefault(logger)
-	// Create a traceId from google UUID & store it in a context
-	traceID := uuid.NewString()
-
-	ctx := context.WithValue(context.Background(), "traceID", traceID)
-
 	/*
 	 Initial flag setup to capture new todo information
 	 id - only relevant for update/delete options
@@ -43,6 +29,10 @@ func StartToDo() {
 	 description - default to empty string - relevant for create
 	 status - default to not started - relevant for create
 	*/
+
+	traceID := uuid.NewString()
+
+	ctx := context.WithValue(context.Background(), "traceID", traceID)
 
 	flag.StringVar(&action, "action", "show", "Selected action")
 	flag.StringVar(&description, "description", " ", "Description of to do item")

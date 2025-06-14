@@ -136,6 +136,7 @@ func TestValidateStatusTableDriven(t *testing.T) {
 		{"Valid_NotStarted", "NOT STARTED", true},
 		{"Valid_Started", "STARTED", true},
 		{"Invalid", "random junk", false},
+		{"zero length", "", false},
 	}
 
 	for _, tt := range tests {

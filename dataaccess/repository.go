@@ -3,6 +3,7 @@ package dataaccess
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"os"
@@ -42,9 +43,23 @@ func ShowAllRecords(ctx context.Context) {
 
 }
 
+// Retrieve array of all current todo records
+func GetAllRecords(ctx context.Context) []model.ToDo {
+
+	filePath := "./data/todos.json"
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+	slog.Info("Starting GetAllRecords for traceID", "traceID", traceID)
+
+	// Load todos from json file
+	return loadAll(filePath)
+}
+
 // Create a single ToDo item and persist back to file
 // Note :-  we have default values set in the flags so we can just create with those
-func Create(ctx context.Context, description string, status string) {
+func Create(ctx context.Context, description string, status string) error {
 	filePath := "./data/todos.json"
 	var toDos []model.ToDo
 
@@ -52,6 +67,19 @@ func Create(ctx context.Context, description string, status string) {
 	if traceID == nil {
 		traceID = "not found"
 	}
+
+	// Check the description is good
+	if len(description) == 0 {
+		// blank description
+		return errors.New("description cannot be blank")
+	}
+
+	// Check the status is good
+	if !utils.ValidateStatus(status) {
+		// incorrect status
+		return errors.New("status must be one of " + utils.ShowPermittedStatuses())
+	}
+
 	slog.Info("Starting Create..with ", "description", description, "status", status, "traceID", traceID)
 
 	// Load todos from json file
@@ -70,16 +98,17 @@ func Create(ctx context.Context, description string, status string) {
 	saveAll(toDos)
 
 	slog.Info("Create completes after saving ", "record", toDo)
+	return nil
 
 }
 
 // Update a single ToDo item and persist back to file, make sure
 // incoming ToDo item has a sensible Id otherwise bail out
-func Update(ctx context.Context, toDo model.ToDo) {
+func Update(ctx context.Context, toDo model.ToDo) error {
 	// check for uninitialised Id
 	if toDo.Id <= 0 {
-		slog.Info("ToDo Id uninitialised - no action taken")
-		return
+		slog.Error("ToDo Id uninitialised - no action taken")
+		return errors.New("id must be > 0")
 	}
 
 	filePath := "./data/todos.json"
@@ -98,6 +127,7 @@ func Update(ctx context.Context, toDo model.ToDo) {
 
 	// scan the array for the required id and capture its index
 	var currIndx int = -1
+	bUpdated := false
 	for i := 0; i < len(toDos); i++ {
 		if toDos[i].Id == toDo.Id {
 			currIndx = i
@@ -112,20 +142,27 @@ func Update(ctx context.Context, toDo model.ToDo) {
 		// persist back to file
 		saveAll(toDos)
 		slog.Info("Update for ", "record", toDo, "status", "completed")
+		bUpdated = true
 	} else {
 		slog.Warn("Update not run as record id, cannot be located - no action taken ", "ID", toDo.Id)
 	}
-	slog.Info("Update completes")
+
+	if !bUpdated && currIndx != -1 {
+		// some other issue with the save
+		return errors.New("Update not run, see previous log messages")
+	} else {
+		return nil
+	}
 
 }
 
 // delete a record by id with check to ensure id is sensible
-func Delete(ctx context.Context, Id int) {
+func Delete(ctx context.Context, Id int) error {
 
 	// check for uninitialised Id
 	if Id <= 0 {
 		slog.Info("Id uninitialised - no action")
-		return
+		return errors.New("id must be > 0")
 	}
 
 	var toDos []model.ToDo
@@ -150,18 +187,67 @@ func Delete(ctx context.Context, Id int) {
 		}
 	}
 
+	bDelete := false
 	if currIndx > -1 {
 		var newToDos = append(toDos[:currIndx], toDos[currIndx+1:]...)
 		// persist back to file
 		saveAll(newToDos)
 		slog.Info("Delete for id complete", "ID", Id)
+		bDelete = true // no error
 	} else {
 		slog.Warn("Delete not run as record id, cannot be located - no action taken ", "ID", Id)
 	}
-	slog.Info("Delete completes")
+
+	if !bDelete {
+		return errors.New("Delete not run as record id, cannot be located - no action taken")
+	} else {
+		return nil
+	}
+
 }
 
-// saves all items in ToDo array back to the specified json file
+func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
+
+	// check for uninitialised Id
+	if Id <= 0 {
+		slog.Error("Id uninitialised - no action")
+		return model.ToDo{}, errors.New("id must be > 0")
+	}
+
+	var toDos []model.ToDo
+	filePath := "./data/todos.json"
+
+	traceID := ctx.Value("traceID")
+	if traceID == nil {
+		traceID = "not found"
+	}
+
+	slog.Info("Starting Get for ID", "ID", Id, "traceID", traceID)
+
+	// Load todos from json file
+	toDos = loadAll(filePath)
+
+	// scan the array for the required id and capture its index
+	var currIndx int = -1
+	bFound := false
+	for i := 0; i < len(toDos); i++ {
+		if toDos[i].Id == Id {
+			currIndx = i
+			bFound = true
+			break
+		}
+	}
+
+	// have we found anything ??
+	if !bFound {
+		return model.ToDo{}, errors.New("Unable to locate record with id " + strconv.Itoa(Id))
+	}
+
+	slog.Info("Get for ID completes", "ID", Id)
+	return toDos[currIndx], nil
+}
+
+// private - Saves all items in ToDo array back to the specified json file
 // leave as private
 func saveAll(todos []model.ToDo) {
 	slog.Info("Starting saveAll")
@@ -194,7 +280,7 @@ func saveAll(todos []model.ToDo) {
 	slog.Info("File Written ok, SaveAll completes")
 }
 
-// Loads all items in from the specified file and returns an array of ToDo Items
+// private - Loads all items in from the specified file and returns an array of ToDo Items
 // leave as private
 func loadAll(filePath string) []model.ToDo {
 

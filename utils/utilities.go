@@ -45,7 +45,6 @@ func ValidateStatus(status string) bool {
 
 }
 
-func ShowPermittedStatuses() {
-	fmt.Printf("Permitted statuses are :- %s, %s, %s\n", constants.StatusCompleted, constants.StatusNotStarted, constants.StatusStarted)
-
+func ShowPermittedStatuses() string {
+	return fmt.Sprintf("Permitted statuses are :- %s, %s, %s\n", constants.StatusCompleted, constants.StatusNotStarted, constants.StatusStarted)
 }
