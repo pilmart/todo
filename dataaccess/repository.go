@@ -136,7 +136,12 @@ func Update(ctx context.Context, toDo model.ToDo) error {
 	}
 
 	if currIndx > -1 {
-		// In place array update using currindx
+		// Check the status is good before we write it
+		if !utils.ValidateStatus(toDo.Status) {
+			// incorrect status
+			return errors.New("status must be one of " + utils.ShowPermittedStatuses())
+		}
+		// all ok - In place array update using currindx
 		toDos[currIndx].Description = toDo.Description
 		toDos[currIndx].Status = toDo.Status
 		// persist back to file

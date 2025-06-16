@@ -4,7 +4,8 @@ package main
 import (
 	"log/slog"
 	"os"
-	"todo/cli"
+	_ "todo/cli"
+	"todo/web"
 )
 
 // All code split out into packages, this is now the main entrypoint
@@ -17,7 +18,7 @@ func main() {
 	// Use this logger throughout the app
 	slog.SetDefault(logger)
 
-	//web.StartMux()
-	cli.StartToDo()
+	web.StartMux()
+	//cli.StartToDo()
 
 }

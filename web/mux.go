@@ -292,7 +292,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 
 	// all ok pass description & status to create function
 	// Additional validation occurs in create
-	dataaccess.Create(ctx, description, status)
+	err = dataaccess.Create(ctx, description, status)
 	if err != nil {
 		// build an error string
 		errMsg := fmt.Sprintf("Error creating new toDo Item %s TraceId: %v", err.Error(), traceID)
