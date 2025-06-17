@@ -15,10 +15,15 @@ import (
 
 // Show all the current items on the console.
 // make functions public by capitalising function names
+
+const (
+	JSON_DATA = "C:\\Users\\scullionm\\go_academy\\code\\todo\\data\\todos.json"
+)
+
 func ShowAllRecords(ctx context.Context) {
 	// ToDos array of ToDo items
 	var toDos []model.ToDo
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
 		traceID = "not found"
@@ -46,7 +51,7 @@ func ShowAllRecords(ctx context.Context) {
 // Retrieve array of all current todo records
 func GetAllRecords(ctx context.Context) []model.ToDo {
 
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
 		traceID = "not found"
@@ -60,7 +65,7 @@ func GetAllRecords(ctx context.Context) []model.ToDo {
 // Create a single ToDo item and persist back to file
 // Note :-  we have default values set in the flags so we can just create with those
 func Create(ctx context.Context, description string, status string) error {
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 	var toDos []model.ToDo
 
 	traceID := ctx.Value("traceID")
@@ -111,7 +116,7 @@ func Update(ctx context.Context, toDo model.ToDo) error {
 		return errors.New("id must be > 0")
 	}
 
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 	var toDos []model.ToDo
 
 	traceID := ctx.Value("traceID")
@@ -171,7 +176,7 @@ func Delete(ctx context.Context, Id int) error {
 	}
 
 	var toDos []model.ToDo
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
@@ -220,7 +225,7 @@ func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
 	}
 
 	var toDos []model.ToDo
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 
 	traceID := ctx.Value("traceID")
 	if traceID == nil {
@@ -256,7 +261,7 @@ func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
 // leave as private
 func saveAll(todos []model.ToDo) {
 	slog.Info("Starting saveAll")
-	filePath := "./data/todos.json"
+	filePath := JSON_DATA
 
 	// Marshal the struct into JSON
 	jsonData, err := json.MarshalIndent(todos, "", "  ")
@@ -308,7 +313,7 @@ func loadAll(filePath string) []model.ToDo {
 	if err != nil {
 		slog.Error("Unable to open file", "error", err)
 	}
-	slog.Info("Successfully Opened todos.json")
+	slog.Info("Successfully Opened file", "file", filePath)
 
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer data.Close()

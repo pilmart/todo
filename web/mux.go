@@ -11,6 +11,7 @@ import (
 	"sync"
 	"todo/dataaccess"
 	"todo/model"
+	"todo/utils"
 
 	"github.com/google/uuid"
 )
@@ -116,19 +117,20 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("Incoming id", "ToDO ID :", toDoID)
+	slog.Info("Incoming id", "ID :", toDoID)
 
 	// Go And grab our toDo Item
 	toDo, err := dataaccess.GetByID(ctx, toDoID)
 	if err != nil {
 		// build an error string
-		errMsg := fmt.Sprintf("Unable to execute GetByID with id : %s Error returned: %s TraceID: %v", r.PathValue("id"), err.Error(), traceID)
+		errMsg := fmt.Sprintf("Unable to run GetByID with id : %s Error returned: %s TraceID: %v", r.PathValue("id"), err.Error(), traceID)
 		// log the error
 		slog.Error(errMsg)
 		// return http error + status
-		http.Error(w, errMsg, http.StatusInternalServerError)
+		http.Error(w, errMsg, http.StatusNotFound)
 		return
 	}
+
 	// marshal the data, could also use new encoder here as well
 	jsonData, err := json.Marshal(toDo)
 	if err != nil {
@@ -183,7 +185,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		// log the error
 		slog.Error(errMsg)
 		// return http error + status
-		http.Error(w, errMsg, http.StatusInternalServerError)
+		http.Error(w, errMsg, http.StatusNotFound)
 		return
 	}
 
@@ -228,7 +230,7 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 		// log the error
 		slog.Error(errMsg)
 		// return http error + status
-		http.Error(w, errMsg, http.StatusInternalServerError)
+		http.Error(w, errMsg, http.StatusNotFound)
 		return
 	}
 	// no description present use original
@@ -241,6 +243,15 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 	if len(toDo.Status) == 0 {
 		//use original
 		toDo.Status = originalToDo.Status
+	} else {
+		// Check the status is good before we pass it to update
+		if !utils.ValidateStatus(toDo.Status) {
+			// incorrect status
+			// return http error + status
+			errMsg := fmt.Sprintf("Status must be one of %s", utils.ShowPermittedStatuses())
+			http.Error(w, errMsg, http.StatusBadRequest)
+			return
+		}
 	}
 
 	// call the update
@@ -289,6 +300,24 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 
 	// capture the status
 	status := toDo.Status
+
+	// Check the description is good
+	if len(description) == 0 {
+		// blank description
+		// return http error + status
+		errMsg := fmt.Sprintln("Description cannot be blank")
+		http.Error(w, errMsg, http.StatusBadRequest)
+		return
+	}
+
+	// Check the status is good
+	if !utils.ValidateStatus(status) {
+		// incorrect status
+		// return http error + status
+		errMsg := fmt.Sprintf("Status must be one of %s", utils.ShowPermittedStatuses())
+		http.Error(w, errMsg, http.StatusBadRequest)
+		return
+	}
 
 	// all ok pass description & status to create function
 	// Additional validation occurs in create

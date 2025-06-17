@@ -1,8 +1,10 @@
-package utils
+package utils_test
 
 import (
 	"testing"
+	"todo/dataaccess"
 	"todo/model"
+	"todo/utils"
 )
 
 func TestGetNextID_Sequential(t *testing.T) {
@@ -15,7 +17,7 @@ func TestGetNextID_Sequential(t *testing.T) {
 		{Id: 3, Description: "description here", Status: "COMPLETED"},
 	}
 
-	result := GetNextId(toDos)
+	result := utils.GetNextId(toDos)
 	expected := 4
 
 	if result != expected {
@@ -33,7 +35,7 @@ func TestGetNextID_Unordered(t *testing.T) {
 		{Id: 6, Description: "description here", Status: "COMPLETED"},
 	}
 
-	result := GetNextId(toDos)
+	result := utils.GetNextId(toDos)
 	expected := 18
 
 	if result != expected {
@@ -50,7 +52,7 @@ func TestGetNextID_EmptyToDoList(t *testing.T) {
 	// Create dummy todos array in sequence, sequences out of order
 	var toDos []model.ToDo
 
-	result := GetNextId(toDos)
+	result := utils.GetNextId(toDos)
 	expected := 1
 
 	if result != expected {
@@ -97,7 +99,7 @@ func TestGetNextIdTableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Actioning test %s", tt.name)
-			result := GetNextId(*tt.todo)
+			result := utils.GetNextId(*tt.todo)
 			if result != tt.expected {
 				t.Errorf("GetNextId = %d want %d", result, tt.expected)
 			}
@@ -110,11 +112,11 @@ func TestCheckFileExists_ReturnType(t *testing.T) {
 
 	// Should only return a boolean
 	t.Log("TestCheckFileExists_ReturnType - starts")
-	filePath := "./data/todos.json"
-	result := CheckFileExists(filePath)
+	filePath := dataaccess.JSON_DATA
+	result := utils.CheckFileExists(filePath)
 	var expected bool
 
-	// SHould only get a boolean irrespective of file name
+	// Shcould only get a boolean irrespective of file name
 	if result != expected {
 		t.Errorf("TestCheckFileExists_ReturnType = %T want %T", result, expected)
 	}
@@ -142,7 +144,7 @@ func TestValidateStatusTableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Actioning test %s", tt.name)
-			result := ValidateStatus(tt.value)
+			result := utils.ValidateStatus(tt.value)
 			if result != tt.expected {
 				t.Errorf("ValidateStatus = %t want %t", result, tt.expected)
 			}
