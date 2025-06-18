@@ -337,6 +337,15 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func withTraceID(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Create a traceId from google UUID & store it in a context
+		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
+		r = r.WithContext(ctx)
+		f(w, r)
+	}
+}
+
 func StartMux() {
 
 	mux := http.NewServeMux()
@@ -351,52 +360,13 @@ func StartMux() {
 
 	// Handler registration
 	// register a simple about handler, added trace ID - implemented
-	mux.HandleFunc("GET /about", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		aboutHandler(w, r)
-	})
 
-	// register a simple todo list handler use this to show a list of current todos - implemented
-	mux.HandleFunc("GET /todolist", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		toDoListHandler(w, r)
-	})
-
-	// register get by id handler - implemented
-	mux.HandleFunc("GET /todo/{id}", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		getHandler(w, r)
-	})
-
-	// register delete handler - implemented
-	mux.HandleFunc("DELETE /todo/{id}", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		deleteHandler(w, r)
-	})
-
-	// register update handler - implemented
-	mux.HandleFunc("PUT /todo", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		updateHandler(w, r)
-	})
-
-	// register create handler
-	mux.HandleFunc("POST /todo", func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		createHandler(w, r)
-	})
+	mux.Handle("GET /about", withTraceID(aboutHandler))
+	mux.Handle("GET /todolist", withTraceID(toDoListHandler))
+	mux.Handle("GET /todo/{id}", withTraceID(getHandler))
+	mux.Handle("PUT /todo", withTraceID(updateHandler))
+	mux.Handle("POST /todo", withTraceID(createHandler))
+	mux.Handle("DELETE /todo/{id}", withTraceID(deleteHandler))
 
 	http.ListenAndServe("localhost:3000", mux)
 }

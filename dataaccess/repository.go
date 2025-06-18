@@ -257,6 +257,24 @@ func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
 	return toDos[currIndx], nil
 }
 
+// Return a list of current ids from the json file storage
+func GetCurrentIDS () [] int {
+	slog.Info("Starting GetCurrentIDS....")
+	
+	toDos := loadAll(JSON_DATA);
+	var ids [] int
+
+	// make sure we have something to work with...
+	if len(toDos) > 0 {
+		// Extract the IDs from the todo items
+		for i := 0; i < len(toDos); i++ {
+			ids = append(ids,toDos[i].Id)
+		}
+	}
+	slog.Info("GetCurrentIDS completes...")
+	return ids
+}
+
 // private - Saves all items in ToDo array back to the specified json file
 // leave as private
 func saveAll(todos []model.ToDo) {
@@ -336,3 +354,4 @@ func loadAll(filePath string) []model.ToDo {
 	slog.Info("loadAll completes...")
 	return todos
 }
+

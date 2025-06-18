@@ -3,44 +3,18 @@ package cli
 // imports
 import (
 	"context"
-	"flag"
 	"log"
+	"log/slog"
 	"strings"
-	"todo/constants"
 	"todo/dataaccess"
 	"todo/model"
 	"todo/utils"
-
-	"github.com/google/uuid"
 )
 
-func StartToDo() {
-
-	// Flag values
-	var Id int
-	var action string
-	var description string
-	var status string
-
-	/*
-	 Initial flag setup to capture new todo information
-	 id - only relevant for update/delete options
-	 action - one of show/update/create/delete
-	 description - default to empty string - relevant for create
-	 status - default to not started - relevant for create
-	*/
-
-	traceID := uuid.NewString()
-	ctx := context.WithValue(context.Background(), "traceID", traceID)
-
-	flag.StringVar(&action, "action", "show", "Selected action")
-	flag.StringVar(&description, "description", " ", "Description of to do item")
-	flag.StringVar(&status, "status", constants.StatusNotStarted, "Status of to do item")
-	flag.IntVar(&Id, "Id", 0, "Mandatory for both update/delete actions")
-	flag.Parse()
+func StartCLI(ctx context.Context, action string, status string, description string, Id int) {
 
 	// actions - Create / Show / Update / Delete
-	log.Printf("Selected action..%s\n", strings.ToLower(action))
+	slog.Info("Selected action", "action", strings.ToLower(action))
 	switch strings.ToLower(action) {
 	case "show":
 		// show all records no params needed
