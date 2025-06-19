@@ -18,6 +18,8 @@ import (
 
 var mu sync.Mutex
 
+
+
 // Handlers go here similar to controllers in spring mvc
 // Returns a static about page no need for mutex here....probably
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,11 +98,7 @@ func toDoListHandler(w http.ResponseWriter, r *http.Request) {
 // Get a single record
 func getHandler(w http.ResponseWriter, r *http.Request) {
 
-	// synchronisation here
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Trace ID should have been bolted on via anonymous wrapper
+	// Trace ID should have been bolted on via withTraceID
 	ctx := r.Context()
 	traceID := ctx.Value("traceID")
 
@@ -119,7 +117,6 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Incoming id", "ID :", toDoID)
 
-	// Go And grab our toDo Item
 	toDo, err := dataaccess.GetByID(ctx, toDoID)
 	if err != nil {
 		// build an error string
@@ -154,11 +151,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 // delete a single record
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
-	// synchronisation here
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Trace ID should have been bolted on via anonymous wrapper
+	// Trace ID should have been bolted on via withTraceID
 	ctx := r.Context()
 	traceID := ctx.Value("traceID")
 
@@ -177,7 +170,6 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Incoming id", "ToDO ID :", toDoID)
 
-	// Go and delete our toDo Item
 	err = dataaccess.Delete(ctx, toDoID)
 	if err != nil {
 		// build an error string
@@ -198,11 +190,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 // Update a todo item, requires a model.ToDo payload using 'PUT' method
 func updateHandler(w http.ResponseWriter, r *http.Request) {
 
-	// synchronisation here
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Trace ID should have been bolted on via anonymous wrapper
+	// Trace ID should have been bolted on via withTraceID
 	ctx := r.Context()
 	traceID := ctx.Value("traceID")
 
@@ -255,6 +243,10 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the update
+	// synchronisation here comments as per other handlers
+	mu.Lock()
+	defer mu.Unlock()
+
 	err = dataaccess.Update(ctx, toDo)
 	if err != nil {
 		// build an error string
@@ -272,11 +264,8 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
-	// synchronisation here
-	mu.Lock()
-	defer mu.Unlock()
 
-	// Trace ID should have been bolted on via anonymous wrapper
+	// Trace ID should have been bolted on via withTraceID
 	ctx := r.Context()
 	traceID := ctx.Value("traceID")
 
@@ -319,8 +308,6 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// all ok pass description & status to create function
-	// Additional validation occurs in create
 	err = dataaccess.Create(ctx, description, status)
 	if err != nil {
 		// build an error string
@@ -337,6 +324,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Simple middleware code to 'bolt-on' a traceID to the handlers
 func withTraceID(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Create a traceId from google UUID & store it in a context
@@ -359,8 +347,7 @@ func StartMux() {
 	fmt.Println("POST /todo, with request body, creates a new record")
 
 	// Handler registration
-	// register a simple about handler, added trace ID - implemented
-
+	// register a simple about handler, added trace ID - implemented	
 	mux.Handle("GET /about", withTraceID(aboutHandler))
 	mux.Handle("GET /todolist", withTraceID(toDoListHandler))
 	mux.Handle("GET /todo/{id}", withTraceID(getHandler))

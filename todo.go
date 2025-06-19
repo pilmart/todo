@@ -21,7 +21,7 @@ func main() {
 	// Set up our logging, could write to a file here !
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level:     slog.LevelInfo,
-		AddSource: true}))
+		AddSource: false}))
 
 	// Use this logger throughout the app
 	slog.SetDefault(logger)
