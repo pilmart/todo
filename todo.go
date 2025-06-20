@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"todo/cli"
-	"todo/concurrency"
 	"todo/constants"
 	"todo/web"
 
@@ -63,7 +62,7 @@ func main() {
 		// show all records no params needed
 		cli.StartCLI(ctx, action, status, description, Id)
 	case "concurrency":
-		concurrency.StartConcurrency()
+		//concurrency.StartConcurrency()
 
 	default:
 		slog.Info(msg + " currently unsupported")
