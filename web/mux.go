@@ -85,7 +85,7 @@ func toDoListHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("path todos completes")
 }
 
-// Returns a 'slightly' more dynamic todo listing page
+// Service 'GET' Requests
 func getHandler(actor *Actor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -115,54 +115,9 @@ func getHandler(actor *Actor) http.HandlerFunc {
 	}
 }
 
-// Simple middleware code to 'bolt-on' a traceID to the handlers
-func withTraceID(f http.HandlerFunc) http.HandlerFunc {
+// Service 'PUT' / update Requests
+func putHandler(actor *Actor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Create a traceId from google UUID & store it in a context
-		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
-		r = r.WithContext(ctx)
-		f(w, r)
-	}
-}
-
-func StartMux() {
-
-	actor := NewActor(5)
-	actor.Start()
-
-	mux := http.NewServeMux()
-
-	slog.Info("Server mux started, available at http://localhost:3000")
-
-	mux.HandleFunc("GET /about", withTraceID(aboutHandler))
-	mux.HandleFunc("GET /todolist", withTraceID(toDoListHandler))
-	mux.HandleFunc("GET /todo/{id}", withTraceID(getHandler(actor)))
-
-	mux.HandleFunc("DELETE /todo/{id}", withTraceID(func(w http.ResponseWriter, r *http.Request) {
-		// Trace ID should have been bolted on via withTraceID
-		ctx := r.Context()
-		traceID := ctx.Value("traceID")
-
-		// set up reply channel
-		reply := make(chan Response)
-		defer close(reply)
-
-		slog.Info(fmt.Sprintf("TraceID: %v Revised delete Handler starts...", traceID))
-
-		// create our message and send it directly to the mailbox
-		actor.mailbox <- Message{Context: ctx, Action: r.Method, Payload: r.PathValue("id"), Reply: reply}
-
-		// get our response
-		response := <-reply
-
-		w.WriteHeader(response.Status)
-		// probably easier ways to do this
-		w.Write([]byte(response.Message))
-		slog.Info(fmt.Sprintf("TraceID: %v Revised delete Handler completes", traceID))
-
-	}))
-
-	mux.HandleFunc("PUT /todo", withTraceID(func(w http.ResponseWriter, r *http.Request) {
 		// Trace ID should have been bolted on via withTraceID
 		ctx := r.Context()
 		traceID := ctx.Value("traceID")
@@ -193,10 +148,13 @@ func StartMux() {
 		// probably easier ways to do this
 		w.Write([]byte(response.Message))
 		slog.Info(fmt.Sprintf("TraceID: %v Revised update Handler completes", traceID))
+	}
+}
 
-	}))
+// Service 'POST' / create Requests
+func postHandler(actor *Actor) http.HandlerFunc {
 
-	mux.HandleFunc("POST /todo", withTraceID(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// Trace ID should have been bolted on via withTraceID
 		ctx := r.Context()
 		traceID := ctx.Value("traceID")
@@ -227,8 +185,59 @@ func StartMux() {
 		// probably easier ways to do this
 		w.Write([]byte(response.Message))
 		slog.Info(fmt.Sprintf("TraceID: %v Revised create Handler completes", traceID))
+	}
+}
 
-	}))
+// Service 'DELETE'Requests
+func deleteHandler(actor *Actor) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Trace ID should have been bolted on via withTraceID
+		ctx := r.Context()
+		traceID := ctx.Value("traceID")
 
+		// set up reply channel
+		reply := make(chan Response)
+		defer close(reply)
+
+		slog.Info(fmt.Sprintf("TraceID: %v Revised delete Handler starts...", traceID))
+
+		// create our message and send it directly to the mailbox
+		actor.mailbox <- Message{Context: ctx, Action: r.Method, Payload: r.PathValue("id"), Reply: reply}
+
+		// get our response
+		response := <-reply
+
+		w.WriteHeader(response.Status)
+		// probably easier ways to do this
+		w.Write([]byte(response.Message))
+		slog.Info(fmt.Sprintf("TraceID: %v Revised delete Handler completes", traceID))
+	}
+}
+
+// Simple middleware code to 'bolt-on' a traceID to the handlers
+func withTraceID(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Create a traceId from google UUID & store it in a context
+		ctx := context.WithValue(r.Context(), "traceID", uuid.NewString())
+		r = r.WithContext(ctx)
+		f(w, r)
+	}
+}
+
+func StartMux() {
+
+	actor := NewActor(5)
+	actor.Start()
+	mux := http.NewServeMux()
+	slog.Info("Server mux started, available at http://localhost:3000")
+
+	// set up handlers
+	mux.HandleFunc("GET /about", withTraceID(aboutHandler))
+	mux.HandleFunc("GET /todolist", withTraceID(toDoListHandler))
+	// rest calls
+	mux.HandleFunc("GET /todo/{id}", withTraceID(getHandler(actor)))
+	mux.HandleFunc("PUT /todo", withTraceID(putHandler(actor)))
+	mux.HandleFunc("DELETE /todo/{id}", withTraceID(deleteHandler(actor)))
+	mux.HandleFunc("POST /todo", withTraceID(postHandler(actor)))
 	http.ListenAndServe("localhost:3000", mux)
 }

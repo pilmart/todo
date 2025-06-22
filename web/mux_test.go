@@ -12,7 +12,6 @@ import (
 // test endpoint "GET /todo/{id}"
 func TestGetHandler(t *testing.T) {
 
-	//t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 
 	tests := []struct {
@@ -51,9 +50,9 @@ func TestGetHandler(t *testing.T) {
 	}
 }
 
+// parallel get requests
 func TestGetHandlerParallel(t *testing.T) {
 
-	//t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 
 	tests := []struct {
@@ -62,8 +61,14 @@ func TestGetHandlerParallel(t *testing.T) {
 		expectedCode int
 		expectedBody string
 	}{
+
+		{"happy path record present", 25, http.StatusOK, `{"id":25,"description":"this is body number 2":"NOT STARTED"}`},
+		{"happy path record present", 26, http.StatusOK, `{"id":26,"description":"this is body number 3":"NOT STARTED"}`},
+		{"happy path record present", 27, http.StatusOK, `{"id":27,"description":"this is body number 4":"NOT STARTED"}`},
+		{"happy path record present", 28, http.StatusOK, `{"id":28,"description":"this is body number 5":"NOT STARTED"}`},
+		{"happy path record present", 29, http.StatusOK, `{"id":29,"description":"this is body number 6":"NOT STARTED"}`},
 		{"happy path record present", 18, http.StatusOK, `{"id":18,"description":"Updated via test":"NOT STARTED"}`},
-		{"happy path record present", 19, http.StatusOK, `{"id":19,"description":"Updated via test":"NOT STARTED"}`},
+		{"happy path record present", 23, http.StatusOK, `{"id":23,"description":"this is body number 0":"NOT STARTED"}`},
 		{"happy path record present", 20, http.StatusOK, `{"id":20,"description":"Updated via test":"NOT STARTED"}`},
 		{"happy path record present", 21, http.StatusOK, `{"id":21,"description":"Updated via update test":"NOT STARTED"}`},
 		{"happy path record present", 22, http.StatusOK, `{"id":22,"description":"Updated via test":"NOT STARTED"}`},
@@ -98,9 +103,8 @@ func TestGetHandlerParallel(t *testing.T) {
 
 }
 
-// test endpoint POST /todo - need a current record
-func TestPost(t *testing.T) {
-	t.Skip("Skipping this test for now")
+func TestPostHandler(t *testing.T) {
+
 	baseUrl := "/todo"
 	tests := []struct {
 		testName     string
@@ -115,13 +119,14 @@ func TestPost(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		actor := NewActor(1)
+		actor.Start()
 		urlUnderTest := baseUrl
-		t.Logf("Url under test : %s, test name %s", urlUnderTest, test.testName)
+		t.Logf("Url under test : %s, test name POST - %s", urlUnderTest, test.testName)
 		reqBody := strings.NewReader(test.expectedBody)
 		req := httptest.NewRequest(http.MethodPost, urlUnderTest, reqBody)
-		_ = req
 		rec := httptest.NewRecorder()
-		//createHandler(rec, req)
+		withTraceID(postHandler(actor)).ServeHTTP(rec, req)
 
 		res := rec.Result()
 		defer res.Body.Close()
@@ -132,16 +137,69 @@ func TestPost(t *testing.T) {
 
 		body := rec.Body.String()
 		t.Logf("returned body : %s", body)
-		// body := rec.Body.String()
-		// if body != test.expectedBody {
-		// 	t.Errorf("For URL %s, expected body %s, got %s", test.url, test.expectedBody, body)
-		// }
+		actor.Stop()
+	}
+}
+
+func TestPostHandlerParallel(t *testing.T) {
+
+	baseUrl := "/todo"
+
+	tests := []struct {
+		testName     string
+		expectedCode int
+		expectedBody string
+	}{
+
+		{"happy path", http.StatusOK, `{"description":"created via test - 1","status": "NOT STARTED"}`},
+		{"missing description", http.StatusBadRequest, `{"description":"","status": "NOT STARTED"}`},
+		{"missing status", http.StatusBadRequest, `{"description":"Updated via test","status": ""}`},
+		{"Incorrect status", http.StatusBadRequest, `{"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusBadRequest, `{}`},
+		{"happy path", http.StatusOK, `{"description":"created via test - 2","status": "NOT STARTED"}`},
+		{"missing description", http.StatusBadRequest, `{"description":"","status": "NOT STARTED"}`},
+		{"missing status", http.StatusBadRequest, `{"description":"Updated via test","status": ""}`},
+		{"Incorrect status", http.StatusBadRequest, `{"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusBadRequest, `{}`},
+		{"happy path", http.StatusOK, `{"description":"created via test - 3","status": "NOT STARTED"}`},
+		{"missing description", http.StatusBadRequest, `{"description":"","status": "NOT STARTED"}`},
+		{"missing status", http.StatusBadRequest, `{"description":"Updated via test","status": ""}`},
+		{"Incorrect status", http.StatusBadRequest, `{"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusBadRequest, `{}`},
+		{"happy path", http.StatusOK, `{"description":"created via test - 4","status": "NOT STARTED"}`},
+		{"missing description", http.StatusBadRequest, `{"description":"","status": "NOT STARTED"}`},
+		{"missing status", http.StatusBadRequest, `{"description":"Updated via test","status": ""}`},
+		{"Incorrect status", http.StatusBadRequest, `{"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusBadRequest, `{}`},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.testName, func(t *testing.T) {
+			actor := NewActor(10)
+			actor.Start()
+			t.Parallel()
+			urlUnderTest := baseUrl
+			t.Logf("Url under test : %s, test name POST - %s", urlUnderTest, test.testName)
+			reqBody := strings.NewReader(test.expectedBody)
+			req := httptest.NewRequest(http.MethodPost, urlUnderTest, reqBody)
+			rec := httptest.NewRecorder()
+			withTraceID(postHandler(actor)).ServeHTTP(rec, req)
+			res := rec.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != test.expectedCode {
+				t.Errorf("For URL %s, expected status %d, got %d", urlUnderTest, test.expectedCode, res.StatusCode)
+			}
+			actor.Stop()
+		})
+
 	}
 
 }
 
 // test endpoint PUT /todo - need a current record
-func TestPut(t *testing.T) {
+func TestPutHandler(t *testing.T) {
 	t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 	tests := []struct {
@@ -160,7 +218,7 @@ func TestPut(t *testing.T) {
 		urlUnderTest := baseUrl
 		t.Logf("Url under test : %s, test name %s", urlUnderTest, test.testName)
 		reqBody := strings.NewReader(test.expectedBody)
-		req := httptest.NewRequest(http.MethodPost, urlUnderTest, reqBody)
+		req := httptest.NewRequest(http.MethodPut, urlUnderTest, reqBody)
 		_ = req
 		rec := httptest.NewRecorder()
 		//updateHandler(rec, req)
@@ -174,16 +232,11 @@ func TestPut(t *testing.T) {
 
 		body := rec.Body.String()
 		t.Logf("returned body : %s", body)
-		// body := rec.Body.String()
-		// if body != test.expectedBody {
-		// 	t.Errorf("For URL %s, expected body %s, got %s", test.url, test.expectedBody, body)
-		// }
 	}
-
 }
 
 // test endpoint DELETE /todo/{id}
-func TestDelete(t *testing.T) {
+func TestDeleteHandler(t *testing.T) {
 	t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 	tests := []struct {
