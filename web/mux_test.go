@@ -12,7 +12,7 @@ import (
 // test endpoint "GET /todo/{id}"
 func TestGetHandler(t *testing.T) {
 
-	t.Skip("Skipping this test for now")
+	//t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 
 	tests := []struct {
@@ -37,7 +37,7 @@ func TestGetHandler(t *testing.T) {
 		// add on the path variable... we hope
 		req.SetPathValue("id", strconv.Itoa(test.id))
 		rec := httptest.NewRecorder()
-		getHandler(actor).ServeHTTP(rec, req)
+		withTraceID(getHandler(actor)).ServeHTTP(rec, req)
 		res := rec.Result()
 		defer res.Body.Close()
 
@@ -84,7 +84,7 @@ func TestGetHandlerParallel(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, urlUnderTest, nil)
 			req.SetPathValue("id", strconv.Itoa(test.id))
 			rec := httptest.NewRecorder()
-			getHandler(actor).ServeHTTP(rec, req)
+			withTraceID(getHandler(actor)).ServeHTTP(rec, req)
 			res := rec.Result()
 			defer res.Body.Close()
 
