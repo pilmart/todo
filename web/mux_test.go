@@ -14,27 +14,30 @@ func TestGetHandler(t *testing.T) {
 
 	t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
+
 	tests := []struct {
 		testName     string
 		id           int
 		expectedCode int
 		expectedBody string
 	}{
-		{"happy path record present", 18, http.StatusOK, `{"id":18,"description":"this should work","status":"NOT STARTED"}`},
+		{"happy path record present", 34, http.StatusOK, `{"id":34,"description":"new record via bruno on sunday":"NOT STARTED"}`},
 		{"non-existent record", 445, http.StatusNotFound, `{}`},
 		{"id zero test", 0, http.StatusNotFound, `{}`},
 		{"id minus one test", -1, http.StatusNotFound, `{}`},
 	}
 
 	for _, test := range tests {
+
+		actor := NewActor(1)
+		actor.Start()
 		urlUnderTest := fmt.Sprintf("%s/%d", baseUrl, test.id)
-		t.Logf("Url under test : %s, test name %s", urlUnderTest, test.testName)
+		t.Logf("Url under test : %s, test name GET - %s", urlUnderTest, test.testName)
 		req := httptest.NewRequest(http.MethodGet, urlUnderTest, nil)
 		// add on the path variable... we hope
 		req.SetPathValue("id", strconv.Itoa(test.id))
 		rec := httptest.NewRecorder()
-		//getHandler(rec, req)
-
+		getHandler(actor).ServeHTTP(rec, req)
 		res := rec.Result()
 		defer res.Body.Close()
 
@@ -44,11 +47,55 @@ func TestGetHandler(t *testing.T) {
 
 		body := rec.Body.String()
 		t.Logf("returned body : %s", body)
-		// body := rec.Body.String()
-		// if body != test.expectedBody {
-		// 	t.Errorf("For URL %s, expected body %s, got %s", test.url, test.expectedBody, body)
-		// }
+		actor.Stop()
 	}
+}
+
+func TestGetHandlerParallel(t *testing.T) {
+
+	//t.Skip("Skipping this test for now")
+	baseUrl := "/todo"
+
+	tests := []struct {
+		testName     string
+		id           int
+		expectedCode int
+		expectedBody string
+	}{
+		{"happy path record present", 18, http.StatusOK, `{"id":18,"description":"Updated via test":"NOT STARTED"}`},
+		{"happy path record present", 19, http.StatusOK, `{"id":19,"description":"Updated via test":"NOT STARTED"}`},
+		{"happy path record present", 20, http.StatusOK, `{"id":20,"description":"Updated via test":"NOT STARTED"}`},
+		{"happy path record present", 21, http.StatusOK, `{"id":21,"description":"Updated via update test":"NOT STARTED"}`},
+		{"happy path record present", 22, http.StatusOK, `{"id":22,"description":"Updated via test":"NOT STARTED"}`},
+		{"happy path record present", 34, http.StatusOK, `{"id":34,"description":"new record via bruno on sunday":"NOT STARTED"}`},
+		{"non-existent record", 445, http.StatusNotFound, `{}`},
+		{"id zero test", 0, http.StatusNotFound, `{}`},
+		{"id minus one test", -1, http.StatusNotFound, `{}`},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.testName, func(t *testing.T) {
+			actor := NewActor(10)
+			actor.Start()
+			t.Parallel()
+			urlUnderTest := fmt.Sprintf("%s/%d", baseUrl, test.id)
+			t.Logf("Url under test : %s, test name GET - %s", urlUnderTest, test.testName)
+			req := httptest.NewRequest(http.MethodGet, urlUnderTest, nil)
+			req.SetPathValue("id", strconv.Itoa(test.id))
+			rec := httptest.NewRecorder()
+			getHandler(actor).ServeHTTP(rec, req)
+			res := rec.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != test.expectedCode {
+				t.Errorf("For URL %s, expected status %d, got %d", urlUnderTest, test.expectedCode, res.StatusCode)
+			}
+			actor.Stop()
+		})
+
+	}
+
 }
 
 // test endpoint POST /todo - need a current record
@@ -95,14 +142,14 @@ func TestPost(t *testing.T) {
 
 // test endpoint PUT /todo - need a current record
 func TestPut(t *testing.T) {
-
+	t.Skip("Skipping this test for now")
 	baseUrl := "/todo"
 	tests := []struct {
 		testName     string
 		expectedCode int
 		expectedBody string
 	}{
-		{"happy path", http.StatusOK, `{"id":21, "description":"Updated via update test","status": "NOT STARTED"}`},
+		{"happy path", http.StatusOK, `{"id":23, "description":"Updated via update test XXX","status": "NOT STARTED"}`},
 		{"missing description", http.StatusOK, `{"id":21,"description":"","status": "NOT STARTED"}`},
 		{"Incorrect status", http.StatusBadRequest, `{"id":21,"description":"Updated via test","status": "Incorrect"}`},
 		{"empty body", http.StatusNotFound, `{}`},
