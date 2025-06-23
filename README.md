@@ -59,4 +59,4 @@ Note :- A new id will be generated
 
 Actor pattern implemented and code split out of MUX.go file and moved to todoactor.go
 
-Parallel tests set up for get/put/post delete still outstanding
+Parallel tests set up for get/put/post, delete still outstanding
