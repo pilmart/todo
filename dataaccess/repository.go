@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -131,14 +132,8 @@ func Update(ctx context.Context, toDo model.ToDo) error {
 	toDos = loadAll(filePath)
 
 	// scan the array for the required id and capture its index
-	var currIndx int = -1
-	bUpdated := false
-	for i := 0; i < len(toDos); i++ {
-		if toDos[i].Id == toDo.Id {
-			currIndx = i
-			break
-		}
-	}
+	var currIndx int = utils.FindTodoIndex(toDo.Id, toDos)
+	slog.Info(fmt.Sprintf("currIndx for id : %d", currIndx))
 
 	if currIndx > -1 {
 		// Check the status is good before we write it
@@ -152,17 +147,14 @@ func Update(ctx context.Context, toDo model.ToDo) error {
 		// persist back to file
 		saveAll(toDos)
 		slog.Info("Update for ", "record", toDo, "status", "completed")
-		bUpdated = true
+
 	} else {
-		slog.Warn("Update not run as record id, cannot be located - no action taken ", "ID", toDo.Id)
+		errMsg := fmt.Sprintf("Update not run as record id %d, cannot be located", toDo.Id)
+		slog.Warn(errMsg)
+		return errors.New(errMsg)
 	}
 
-	if !bUpdated && currIndx != -1 {
-		// some other issue with the save
-		return errors.New("Update not run, see previous log messages")
-	} else {
-		return nil
-	}
+	return nil
 
 }
 
@@ -189,31 +181,21 @@ func Delete(ctx context.Context, Id int) error {
 	toDos = loadAll(filePath)
 
 	// scan the array for the required id and capture its index
-	var currIndx int = -1
-	for i := 0; i < len(toDos); i++ {
-		if toDos[i].Id == Id {
-			currIndx = i
-			break
-		}
-	}
+	var currIndx int = utils.FindTodoIndex(Id, toDos)
+	slog.Info(fmt.Sprintf("currIndx for id : %d", currIndx))
 
-	bDelete := false
 	if currIndx > -1 {
 		var newToDos = append(toDos[:currIndx], toDos[currIndx+1:]...)
 		// persist back to file
 		saveAll(newToDos)
 		slog.Info("Delete for id complete", "ID", Id)
-		bDelete = true // no error
 	} else {
-		slog.Warn("Delete not run as record id, cannot be located - no action taken ", "ID", Id)
+		errMsg := fmt.Sprintf("Delete not run as record id %d, cannot be located", Id)
+		slog.Warn(errMsg)
+		return errors.New(errMsg)
 	}
 
-	if !bDelete {
-		return errors.New("Delete not run as record id, cannot be located - no action taken")
-	} else {
-		return nil
-	}
-
+	return nil
 }
 
 func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
@@ -258,17 +240,17 @@ func GetByID(ctx context.Context, Id int) (model.ToDo, error) {
 }
 
 // Return a list of current ids from the json file storage
-func GetCurrentIDS () [] int {
+func GetCurrentIDS() []int {
 	slog.Info("Starting GetCurrentIDS....")
-	
-	toDos := loadAll(JSON_DATA);
-	var ids [] int
+
+	toDos := loadAll(JSON_DATA)
+	var ids []int
 
 	// make sure we have something to work with...
 	if len(toDos) > 0 {
 		// Extract the IDs from the todo items
 		for i := 0; i < len(toDos); i++ {
-			ids = append(ids,toDos[i].Id)
+			ids = append(ids, toDos[i].Id)
 		}
 	}
 	slog.Info("GetCurrentIDS completes...")
@@ -354,4 +336,3 @@ func loadAll(filePath string) []model.ToDo {
 	slog.Info("loadAll completes...")
 	return todos
 }
-

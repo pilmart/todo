@@ -56,17 +56,17 @@
   },
   {
     "id": 26,
-    "description": "this is body number 3",
+    "description": "Updated via update test XXX",
     "status": "NOT STARTED"
   },
   {
     "id": 25,
-    "description": "this is body number 2",
+    "description": "Updated via update test XXXABCDE",
     "status": "NOT STARTED"
   },
   {
     "id": 23,
-    "description": "this is body number 0",
+    "description": "Updated via update test XXX",
     "status": "NOT STARTED"
   },
   {
@@ -76,7 +76,7 @@
   },
   {
     "id": 21,
-    "description": "Updated via update test",
+    "description": "",
     "status": "NOT STARTED"
   },
   {
@@ -86,7 +86,7 @@
   },
   {
     "id": 18,
-    "description": "update for 18 - via bruno again - sunday",
+    "description": "update for 18 - via bruno again - monday",
     "status": "STARTED"
   },
   {
@@ -107,11 +107,6 @@
   {
     "id": 1,
     "description": "test from cli",
-    "status": "NOT STARTED"
-  },
-  {
-    "id": 39,
-    "description": "created via test - 1",
     "status": "NOT STARTED"
   }
 ]

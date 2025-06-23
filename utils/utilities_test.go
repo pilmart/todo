@@ -124,6 +124,37 @@ func TestCheckFileExists_ReturnType(t *testing.T) {
 	t.Log("TestCheckFileExists_ReturnType - ends")
 }
 
+func TestFindTodoIndex(t *testing.T) {
+
+	toDos := []model.ToDo{
+		{Id: 1, Description: "description here", Status: "COMPLETED"},
+		{Id: 7, Description: "description here", Status: "COMPLETED"},
+		{Id: 9, Description: "description here", Status: "COMPLETED"},
+	}
+
+	tests := []struct {
+		name     string
+		id       int
+		expected int
+	}{
+		{"Found 1", 1, 0},
+		{"Found 7", 7, 1},
+		{"Found 9", 9, 2},
+		{"not Found", 47, -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Actioning test %s", tt.name)
+			result := utils.FindTodoIndex(tt.id, toDos)
+			if result != tt.expected {
+				t.Errorf("FindTodoIndex = %d want %d", result, tt.expected)
+			}
+		})
+	}
+
+}
+
 func TestValidateStatusTableDriven(t *testing.T) {
 
 	// Should only return a boolean

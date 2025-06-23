@@ -103,6 +103,7 @@ func TestGetHandlerParallel(t *testing.T) {
 
 }
 
+// Test Endpoint "POST /todo"
 func TestPostHandler(t *testing.T) {
 
 	baseUrl := "/todo"
@@ -141,6 +142,7 @@ func TestPostHandler(t *testing.T) {
 	}
 }
 
+// Parallel Post requests
 func TestPostHandlerParallel(t *testing.T) {
 
 	baseUrl := "/todo"
@@ -200,28 +202,29 @@ func TestPostHandlerParallel(t *testing.T) {
 
 // test endpoint PUT /todo - need a current record
 func TestPutHandler(t *testing.T) {
-	t.Skip("Skipping this test for now")
+
 	baseUrl := "/todo"
 	tests := []struct {
 		testName     string
 		expectedCode int
 		expectedBody string
 	}{
-		{"happy path", http.StatusOK, `{"id":23, "description":"Updated via update test XXX","status": "NOT STARTED"}`},
+		{"happy path", http.StatusOK, `{"id":25, "description":"Updated via update test XXXABCDE","status": "NOT STARTED"}`},
 		{"missing description", http.StatusOK, `{"id":21,"description":"","status": "NOT STARTED"}`},
-		{"Incorrect status", http.StatusBadRequest, `{"id":21,"description":"Updated via test","status": "Incorrect"}`},
-		{"empty body", http.StatusNotFound, `{}`},
-		{"non-existent id", http.StatusNotFound, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
+		{"Incorrect status", http.StatusInternalServerError, `{"id":21,"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusInternalServerError, `{}`},
+		{"non-existent id", http.StatusInternalServerError, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
 	}
 
 	for _, test := range tests {
+		actor := NewActor(1)
+		actor.Start()
 		urlUnderTest := baseUrl
 		t.Logf("Url under test : %s, test name %s", urlUnderTest, test.testName)
 		reqBody := strings.NewReader(test.expectedBody)
 		req := httptest.NewRequest(http.MethodPut, urlUnderTest, reqBody)
-		_ = req
 		rec := httptest.NewRecorder()
-		//updateHandler(rec, req)
+		withTraceID(putHandler(actor)).ServeHTTP(rec, req)
 
 		res := rec.Result()
 		defer res.Body.Close()
@@ -232,6 +235,60 @@ func TestPutHandler(t *testing.T) {
 
 		body := rec.Body.String()
 		t.Logf("returned body : %s", body)
+		actor.Stop()
+	}
+}
+
+func TestPutHandlerParallel(t *testing.T) {
+
+	baseUrl := "/todo"
+	tests := []struct {
+		testName     string
+		expectedCode int
+		expectedBody string
+	}{
+		{"happy path", http.StatusOK, `{"id":22, "description":"Updated via update test XXX 22","status": "NOT STARTED"}`},
+		{"missing description", http.StatusInternalServerError, `{"id":29,"description":"","status": "NOT STARTED"}`},
+		{"Incorrect status", http.StatusInternalServerError, `{"id":30,"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusInternalServerError, `{}`},
+		{"non-existent id", http.StatusInternalServerError, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
+		{"happy path", http.StatusOK, `{"id":23, "description":"Updated via update test XXX 23","status": "NOT STARTED"}`},
+		{"missing description", http.StatusInternalServerError, `{"id":32,"description":"","status": "NOT STARTED"}`},
+		{"Incorrect status", http.StatusInternalServerError, `{"id":33,"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusInternalServerError, `{}`},
+		{"non-existent id", http.StatusInternalServerError, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
+		{"happy path", http.StatusOK, `{"id":25, "description":"Updated via update test XXX 25","status": "NOT STARTED"}`},
+		{"missing description", http.StatusInternalServerError, `{"id":21,"description":"","status": "NOT STARTED"}`},
+		{"Incorrect status", http.StatusInternalServerError, `{"id":21,"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusInternalServerError, `{}`},
+		{"non-existent id", http.StatusInternalServerError, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
+		{"happy path", http.StatusOK, `{"id":26, "description":"Updated via update test XXX 26","status": "NOT STARTED"}`},
+		{"missing description", http.StatusInternalServerError, `{"id":21,"description":"","status": "NOT STARTED"}`},
+		{"Incorrect status", http.StatusInternalServerError, `{"id":21,"description":"Updated via test","status": "Incorrect"}`},
+		{"empty body", http.StatusInternalServerError, `{}`},
+		{"non-existent id", http.StatusInternalServerError, `{"id":99999,"description":"Updated via update test","status": "NOT STARTED"}`},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.testName, func(t *testing.T) {
+			actor := NewActor(10)
+			actor.Start()
+			t.Parallel()
+			urlUnderTest := baseUrl
+			t.Logf("Url under test : %s, test name %s", urlUnderTest, test.testName)
+			reqBody := strings.NewReader(test.expectedBody)
+			req := httptest.NewRequest(http.MethodPut, urlUnderTest, reqBody)
+			rec := httptest.NewRecorder()
+			withTraceID(putHandler(actor)).ServeHTTP(rec, req)
+			res := rec.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != test.expectedCode {
+				t.Errorf("Test name %s, For URL %s, expected status %d, got %d", test.testName, urlUnderTest, test.expectedCode, res.StatusCode)
+			}
+			actor.Stop()
+		})
 	}
 }
 

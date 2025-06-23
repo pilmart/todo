@@ -45,6 +45,19 @@ func ValidateStatus(status string) bool {
 
 }
 
+// Show all the permitted statuses
 func ShowPermittedStatuses() string {
 	return fmt.Sprintf("Permitted statuses are :- %s, %s, %s\n", constants.StatusCompleted, constants.StatusNotStarted, constants.StatusStarted)
+}
+
+// scan the slice of toDos for id and return index of matching
+// element or return -1
+func FindTodoIndex(id int, toDos []model.ToDo) int {
+
+	for i, toDo := range toDos {
+		if toDo.Id == id {
+			return i
+		}
+	}
+	return -1
 }
