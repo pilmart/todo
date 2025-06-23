@@ -38,7 +38,7 @@ HTML based Endpoints are :-
 /about - static html page
 
 Rest API endpoints specified as :-
-GET http://localhost:3000/todo/:id - return single todo item by :id
+GET http://localhost:3000/todo/:id - return single todo item by :idget
 DELETE http://localhost:3000/todo/:id - Delete record with specified id
 PUT http://localhost:3000/todo - Update record - requires JSON payload as 
 {
@@ -52,3 +52,7 @@ POST http://localhost:3000/todo - Requires JSON payload as
   "status":"STARTED"
 } 
 Note :- A new id will be generated
+
+Actor pattern implemented and code split out of MUX.go file and moved to todoactor.go
+
+Parallel tests set up for get/put/post delete still outstanding
