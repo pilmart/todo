@@ -38,6 +38,7 @@ HTML based Endpoints are :-
 /about - static html page
 
 Rest API endpoints specified as :-
+
 GET http://localhost:3000/todo/:id - return single todo item by :id
 
 DELETE http://localhost:3000/todo/:id - Delete record with specified id
